@@ -85,6 +85,18 @@ export function enhanceNotesUI(app,shell){
   screen.querySelector('#note-title')?.closest('.fields')?.classList.add('editor-meta');
   const options=screen.querySelector('#paper-choice')?.closest('.inline');
   options?.classList.add('page-actions');
+  if(hdr&&options){
+   const menu=document.createElement('button');
+   menu.type='button';menu.id='editor-page-menu';menu.title='Pages and attachments';
+   menu.setAttribute('aria-label','Pages and attachments');
+   menu.setAttribute('aria-expanded','false');
+   menu.innerHTML=svg('note')+' <span>Pages</span>';
+   hdr.querySelector('.inline')?.append(menu);
+   menu.addEventListener('click',()=>{
+    const visible=options.classList.toggle('open');
+    menu.setAttribute('aria-expanded',String(visible));
+   });
+  }
   const bar=screen.querySelector('button[data-action="tool"]')?.closest('.inline');
   if(!bar)return;
   bar.classList.add('floating-tools');bar.setAttribute('role','toolbar');bar.setAttribute('aria-label','Writing tools');
@@ -98,7 +110,10 @@ export function enhanceNotesUI(app,shell){
   if(options)options.querySelectorAll('button[data-action]').forEach(b=>{const a=b.dataset.action;b.classList.add('small-action');if(a==='add-page')b.innerHTML=svg('plus')+' Page';});
   const head=screen.querySelector('.editor-layout');head?.classList.add('focus-layout');
   const attachmentPanel=screen.querySelector('.editor-layout + .panel');
-  if(attachmentPanel)attachmentPanel.classList.add('attachment-panel');
+  if(attachmentPanel&&options){
+    attachmentPanel.classList.add('attachment-panel');
+    options.append(attachmentPanel);
+  }
   positionToolbar(bar);
   grip.addEventListener('pointerdown',e=>{
    if(e.button!==0&&e.pointerType==='mouse')return;e.preventDefault();e.stopPropagation();
