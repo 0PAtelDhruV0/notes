@@ -1,0 +1,6 @@
+// This service worker caches ONLY static app files. It NEVER uploads or caches private note data.
+const CACHE='notebook-foundation-static-v1';
+const SHELL=['./','./index.html','./manifest.webmanifest','./assets/icon.svg','./assets/icon-192.png','./assets/icon-512.png','./src/main.js','./src/app.js','./src/ui/developer-shell.js','./src/styles/skeleton.css','./src/core/model.js','./src/core/workspace-store.js','./src/storage/database.js','./src/services/catalog.js','./src/services/notes.js','./src/services/study.js','./src/services/attachments.js','./src/services/backup.js','./src/editor/ink.js','./catalog/worldwide-subjects.csv'];
+self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('notebook-foundation-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',event=>{const req=event.request;if(req.method!=='GET'||new URL(req.url).origin!==location.origin)return;event.respondWith(fetch(req).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE).then(c=>c.put(req,copy)).catch(()=>{});}return res;}).catch(async()=>await caches.match(req)||Response.error()));});
