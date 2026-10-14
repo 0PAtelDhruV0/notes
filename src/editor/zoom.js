@@ -110,7 +110,7 @@ export function mountPageZoom(viewport,surface,controls,{
   viewport.addEventListener('touchmove',move,opts);
   viewport.addEventListener('touchend',end,opts);
   viewport.addEventListener('touchcancel',end,opts);
-  window.addEventListener('resize',resize);
+  globalThis.addEventListener?.('resize',resize);
   display();
   return {
     getState:()=>({zoom,x,y}),
@@ -125,7 +125,7 @@ export function mountPageZoom(viewport,surface,controls,{
       viewport.removeEventListener('touchmove',move);
       viewport.removeEventListener('touchend',end);
       viewport.removeEventListener('touchcancel',end);
-      window.removeEventListener('resize',resize);
+      globalThis.removeEventListener?.('resize',resize);
     }
   };
 }
