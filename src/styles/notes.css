@@ -10,3 +10,30 @@ body.editor-mode .floating-tools{position:fixed;z-index:50;display:flex;flex-wra
 @media(max-width:1100px){.header-actions #save-status{display:none}.header-actions button span{display:none}.shell-header{padding-left:18px;padding-right:18px}.note-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:800px){#navigation{width:192px;flex-basis:192px}#navigation .brand small{display:none}.shell-header{margin-left:192px}.header-search{width:175px}.header-search small{display:none}#screen{padding:26px 21px 50px}.stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}body.editor-mode .page-list{width:65px;min-width:65px}body.editor-mode .focus-layout>section{padding:18px 15px 120px}body.editor-mode .floating-tools{gap:3px;padding:5px}body.editor-mode .floating-tools>button{width:31px;min-width:31px;height:34px}body.editor-mode .floating-tools input[type=range]{width:37px}}
 @media(max-width:600px){#navigation{width:64px;flex-basis:64px;padding:20px 6px 12px}#navigation .brand{padding:0 6px}#navigation .brand span,#navigation .sidebar-new>span,#navigation .nav-kicker,#navigation button[data-to]>span,#navigation .nav-bottom{display:none}#navigation .sidebar-new{margin:16px 5px 12px;padding:0}#navigation button[data-to]{justify-content:center;padding:9px 2px}#navigation button[data-to] svg{width:19px}.shell-header{margin-left:64px;padding:0 12px;height:60px}.top-crumb>span:first-child,.top-crumb .chevron{display:none}.header-actions button{display:none}.header-search{width:130px;height:34px}.header-search input{font-size:11px}#navigation{margin-top:-60px}#screen{padding:20px 14px}.screen-header h1{font-size:22px}.welcome-header .primary-btn{padding:8px;font-size:10px}.note-list{grid-template-columns:1fr}.stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}.continue-card{height:145px;padding:15px}.continue-card .paper-thumb{width:110px;height:124px}.subject-chips{grid-template-columns:1fr}body.editor-mode .editor-meta{top:57px;background:#19171e;left:50%;width:100%;max-width:100%;height:43px;pointer-events:auto}body.editor-mode #note-title{width:100%;font-size:12px}body.editor-mode .page-actions{padding-top:45px;height:84px;min-height:84px}body.editor-mode .floating-tools{max-width:calc(100vw - 10px);overflow-x:auto;scrollbar-width:none}body.editor-mode .floating-tools label:has(#pen-size){display:none}body.editor-mode .floating-tools>button{width:30px;min-width:30px}body.editor-mode .page-list{width:54px;min-width:54px;padding:10px 4px}body.editor-mode .focus-layout>section{padding:12px 8px 120px}}
+
+/* Editor: page management is a popover, leaving only ONE visible writing toolbar. */
+body.editor-mode .page-actions{
+ display:none; position:fixed; top:58px; right:13px; z-index:80;
+ width:min(330px,calc(100vw - 26px)); max-height:calc(100dvh - 90px);
+ height:auto;min-height:0; padding:14px;gap:8px;
+ overflow:auto;flex-wrap:wrap;justify-content:flex-start;
+ border:1px solid #51455f;border-radius:14px;background:#221e2b;
+ box-shadow:0 18px 60px #0009;
+}
+body.editor-mode .page-actions.open{display:flex}
+body.editor-mode .page-actions>label{width:100%}
+body.editor-mode .page-actions .small-action{flex:1;justify-content:center}
+body.editor-mode .page-actions .attachment-panel{
+ display:block!important;width:100%;margin:4px 0 0;padding:11px;
+ font-size:11px;border-radius:9px;
+}
+body.editor-mode .page-actions .attachment-panel h3{margin:0 0 8px;font-size:12px}
+body.editor-mode .page-actions .attachment-panel .stack{display:flex;flex-direction:column;gap:7px}
+body.editor-mode .page-actions .attachment-panel button{font-size:10px;padding:6px}
+body.editor-mode #editor-page-menu{display:flex;align-items:center;gap:6px;color:#e5d9fa;background:#2d2636}
+body.editor-mode #editor-page-menu span{font-size:11px}
+@media(max-width:600px){
+ body.editor-mode .page-actions{height:auto;min-height:0;padding:14px;top:57px}
+ body.editor-mode .editor-meta{top:56px}
+ body.editor-mode .focus-layout{height:auto}
+}
