@@ -34,6 +34,7 @@ export function enhanceNotesUI(app,shell){
   nav.insertAdjacentHTML('afterbegin','<div class="brand"><div class="brand-mark"><i></i><i></i><i></i><i></i></div><span>notes<b>.</b></span><small>STUDY SPACE</small></div><button type="button" class="sidebar-new" id="sidebar-new">'+svg('plus')+'New note <span>⌘N</span></button><div class="nav-kicker">WORKSPACE</div>');
   const labels=[['home','Overview','grid'],['notes','All notes','note'],['planner','Planner','book'],['study','Flashcards','star'],['files','Files','folder'],['trash','Recently deleted','trash']];
   nav.querySelectorAll('[data-to]').forEach(btn=>{const info=labels.find(x=>x[0]===btn.dataset.to);if(!info)return;btn.innerHTML=svg(info[2])+'<span>'+info[1]+'</span>';});
+  nav.querySelector('[data-to="notes"]')?.insertAdjacentHTML('afterend','<button type="button" class="nav-shortcut" data-quick="subjects">'+svg('book')+'<span>Subjects</span></button><button type="button" class="nav-shortcut" data-quick="favorites">'+svg('star')+'<span>Favorites</span></button>');
   nav.insertAdjacentHTML('beforeend','<div class="nav-bottom"><span class="status-indicator"></span><strong>On-device workspace</strong><small>Private notes stored in this browser</small></div>');
   nav.querySelector('#sidebar-new')?.addEventListener('click',()=>shell.showNewNote());
  }
@@ -151,6 +152,12 @@ export function enhanceNotesUI(app,shell){
    const heading=screen.querySelector('.screen-header h1');
    locationLabel.textContent=heading?.textContent==='Student workspace'?'Overview':heading?.textContent||'Overview';
    if(heading?.textContent==='Student workspace')decorateHome();
+   if(screen.querySelector('#notes-results')&&!screen.querySelector('.subject-section')){
+    const names=app.store.snapshot.subjects.slice(0,40);
+    const zone=document.createElement('section');zone.className='subject-section subject-filter';
+    zone.innerHTML='<h2>Subjects <span class="subject-hint">Select a subject to filter your notes</span></h2><div class="subject-chips">'+(names.length?names.map((s,i)=>'<button data-ui-subject="'+esc(s.name)+'"><span class="chip-dot" style="--chip:'+['#a88eff','#82b7dc','#83bba5','#f2b081','#d79ac8'][i%5]+'"></span>'+esc(s.name)+'<small>→</small></button>').join(''):'<p class="muted">Subjects appear here when you create your first note.</p>')+'</div>';
+    const header=screen.querySelector('.screen-header');header?.after(zone);
+   }
    decorateRows();
   }
  }
@@ -160,6 +167,22 @@ export function enhanceNotesUI(app,shell){
  document.getElementById('header-search')?.addEventListener('keydown',e=>{
   if(e.key!=='Enter')return;const text=e.target.value;shell.navigate('notes');
   requestAnimationFrame(()=>{const input=document.getElementById('search-notes');if(input){input.value=text;input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();}});
+ });
+ nav.addEventListener('click',e=>{
+  const item=e.target.closest('button[data-quick]');if(!item)return;
+  const type=item.dataset.quick;
+  shell.navigate('notes');
+  requestAnimationFrame(()=>{
+   const input=document.getElementById('search-notes');
+   if(type==='favorites'){
+    const star=document.getElementById('star-filter');
+    if(star){star.checked=true;star.dispatchEvent(new Event('input',{bubbles:true}));}
+    screen.querySelector('.screen-header h1').textContent='Favorites';
+    document.getElementById('screen-location').textContent='Favorites';
+   }else{
+    screen.querySelector('.subject-section')?.scrollIntoView({behavior:'smooth',block:'start'});
+   }
+  });
  });
  screen.addEventListener('click',e=>{
   const btn=e.target.closest('[data-ui-subject]');if(!btn)return;
