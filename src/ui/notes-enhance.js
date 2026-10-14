@@ -7,6 +7,16 @@ type:'<path d="M4 7V4h16v3M12 4v16M8 20h8"/>',
 highlighter:'<path d="m5 16 10-11 4 4-10 11H5v-4ZM4 21h16M13 7l4 4"/>',
 eraser:'<path d="m4 15 10-11 6 6-10 10H8l-4-5ZM9 9l7 7M11 20h9"/>',
 line:'<path d="M4 20 20 4"/>',
+'heart':'<path d="M20.8 4.5c-2.2-2.2-5.8-2.2-8 0L12 5.4l-.8-.9c-2.2-2.2-5.8-2.2-8 0-2.4 2.4-2.4 6.1 0 8.5L12 21l8.8-8c2.4-2.4 2.4-6.1 0-8.5Z"/>',
+'parallelogram':'<path d="M8 4h14l-6 16H2Z"/>',
+'hexagon':'<path d="M7 3h10l5 9-5 9H7l-5-9Z"/>',
+'pentagon':'<path d="m12 2 10 7-4 12H6L2 9Z"/>',
+'diamond':'<path d="m12 2 10 10-10 10L2 12Z"/>',
+'arrow':'<path d="M3 19 21 5M11 5h10v10"/>',
+'triangle':'<path d="M12 3 22 21H2Z"/>',
+'circle':'<circle cx="12" cy="12" r="9"/>',
+'ellipse':'<ellipse cx="12" cy="12" rx="10" ry="6"/>',
+'rounded-rectangle':'<rect x="3" y="5" width="18" height="14" rx="5"/>',
 rectangle:'<rect x="4" y="5" width="16" height="14" rx="1"/>',
 undo:'<path d="M9 7 4 12l5 5M4 12h10a6 6 0 0 1 6 6"/>',
 redo:'<path d="m15 7 5 5-5 5M20 12H10a6 6 0 0 0-6 6"/>',
@@ -121,7 +131,21 @@ export function enhanceNotesUI(app,shell){
     const choice=e.target.closest('button[data-dock]');if(!choice)return;
     e.stopPropagation();setDock(bar,choice.dataset.dock);closeDockMenu(bar);
   });
-  bar.querySelectorAll('button[data-action="tool"]').forEach(b=>{let name=b.dataset.tool;b.title=name==='type'?'Text':name[0].toUpperCase()+name.slice(1);b.setAttribute('aria-label',b.title);b.innerHTML=svg(name);b.classList.add('tool-btn');});
+  bar.querySelectorAll('button[data-action="tool"]').forEach(b=>{
+   const name=b.dataset.tool;
+   const title=name==='type'?'Text':name.replaceAll('-',' ').replace(/\b\w/g,letter=>letter.toUpperCase());
+   b.title=title;b.setAttribute('aria-label',title);
+   b.innerHTML=svg(name);b.classList.add('tool-btn');
+  });
+  const palette=bar.querySelector('#shape-palette');
+  const shapeTrigger=bar.querySelector('#shapes-trigger');
+  if(shapeTrigger){
+   const selected=palette?.querySelector('button[aria-current="page"]')?.dataset.tool;
+   shapeTrigger.innerHTML=svg(selected||'rectangle');
+   shapeTrigger.classList.add('tool-btn','shape-trigger');
+   shapeTrigger.title=selected?'Shapes: '+selected.replaceAll('-',' '):'Choose a shape';
+   shapeTrigger.setAttribute('aria-label',shapeTrigger.title);
+  }
   ['undo','redo','clear-ink'].forEach(name=>{const b=bar.querySelector('[data-action="'+name+'"]');if(!b)return;b.title=name==='clear-ink'?'Clear handwriting':name[0].toUpperCase()+name.slice(1);b.setAttribute('aria-label',b.title);b.innerHTML=svg(name==='clear-ink'?'trash':name);b.classList.add('tool-btn');});
   const paper=options?.querySelector('#paper-choice')?.closest('label');if(paper){paper.classList.add('page-paper-option');}
   if(options){
@@ -276,10 +300,19 @@ export function enhanceNotesUI(app,shell){
   });
  screen.addEventListener('pointerdown',e=>{
   const bar=screen.querySelector('.floating-tools');
-  if(bar&&!bar.contains(e.target))closeDockMenu(bar);
+  if(bar&&!bar.contains(e.target)){
+   closeDockMenu(bar);
+   bar.querySelector('#shape-palette')?.classList.remove('open');
+   bar.querySelector('#shapes-trigger')?.setAttribute('aria-expanded','false');
+  }
  });
  document.addEventListener('keydown',e=>{
-  if(e.key==='Escape')closeDockMenu(screen.querySelector('.floating-tools'));
+  if(e.key==='Escape'){
+    const bar=screen.querySelector('.floating-tools');
+    closeDockMenu(bar);
+    bar?.querySelector('#shape-palette')?.classList.remove('open');
+    bar?.querySelector('#shapes-trigger')?.setAttribute('aria-expanded','false');
+   }
  });
  window.addEventListener('resize',()=>{const b=screen.querySelector('.floating-tools');if(b&&!drag)positionToolbar(b);});
  app.store.subscribe((_,status)=>{const el=document.getElementById('save-status');if(el)el.textContent=status;});

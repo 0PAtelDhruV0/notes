@@ -12,6 +12,88 @@ const point = (event, rect) => ({
   y: clamp((event.clientY - rect.top) / rect.height),
   p: clamp(event.pressure > 0 ? event.pressure : 0.5)
 });
+
+export const SHAPE_TYPES=Object.freeze(['line','rectangle','rounded-rectangle','ellipse','circle','triangle','arrow','diamond','pentagon','hexagon','star','parallelogram','heart']);
+const isShape=tool=>SHAPE_TYPES.includes(tool);
+function polygon(ctx,points){
+  if(!points.length)return;
+  ctx.moveTo(points[0][0],points[0][1]);
+  for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);
+  ctx.closePath();
+}
+function regularPolygon(cx,cy,rx,ry,count,rotation=-Math.PI/2){
+  return Array.from({length:count},(_,i)=>{
+    const a=rotation+i*2*Math.PI/count;
+    return [cx+Math.cos(a)*rx,cy+Math.sin(a)*ry];
+  });
+}
+function drawShape(ctx,stroke,width,height){
+  const first=stroke.points[0],last=stroke.points[stroke.points.length-1]||first;
+  const ax=first.x*width,ay=first.y*height,bx=last.x*width,by=last.y*height;
+  const left=Math.min(ax,bx),top=Math.min(ay,by),w=Math.abs(bx-ax),h=Math.abs(by-ay);
+  const cx=(ax+bx)/2,cy=(ay+by)/2,rx=w/2,ry=h/2;
+  const radius=Math.min(w,h)*0.18;
+  ctx.beginPath();
+  switch(stroke.tool){
+    case 'line':
+      ctx.moveTo(ax,ay);ctx.lineTo(bx,by);break;
+    case 'arrow':{
+      ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
+      const angle=Math.atan2(by-ay,bx-ax);
+      const length=Math.min(24,Math.max(10,Math.hypot(bx-ax,by-ay)*.22));
+      ctx.moveTo(bx-length*Math.cos(angle-Math.PI/7),by-length*Math.sin(angle-Math.PI/7));
+      ctx.lineTo(bx,by);
+      ctx.lineTo(bx-length*Math.cos(angle+Math.PI/7),by-length*Math.sin(angle+Math.PI/7));
+      break;
+    }
+    case 'rectangle':
+      ctx.rect(left,top,w,h);break;
+    case 'rounded-rectangle':{
+      const cr=Math.min(radius,16);
+      ctx.moveTo(left+cr,top);ctx.lineTo(left+w-cr,top);
+      ctx.quadraticCurveTo(left+w,top,left+w,top+cr);
+      ctx.lineTo(left+w,top+h-cr);ctx.quadraticCurveTo(left+w,top+h,left+w-cr,top+h);
+      ctx.lineTo(left+cr,top+h);ctx.quadraticCurveTo(left,top+h,left,top+h-cr);
+      ctx.lineTo(left,top+cr);ctx.quadraticCurveTo(left,top,left+cr,top);ctx.closePath();break;
+    }
+    case 'ellipse':
+      ctx.ellipse(cx,cy,Math.max(rx,0.5),Math.max(ry,0.5),0,0,2*Math.PI);break;
+    case 'circle':{
+      const radius=Math.max(0.5,Math.min(rx,ry));
+      ctx.arc(cx,cy,radius,0,2*Math.PI);break;
+    }
+    case 'triangle':
+      polygon(ctx,[[cx,top],[left+w,top+h],[left,top+h]]);break;
+    case 'diamond':
+      polygon(ctx,[[cx,top],[left+w,cy],[cx,top+h],[left,cy]]);break;
+    case 'pentagon':
+      polygon(ctx,regularPolygon(cx,cy,rx,ry,5));break;
+    case 'hexagon':
+      polygon(ctx,regularPolygon(cx,cy,rx,ry,6));break;
+    case 'star':{
+      const points=[];
+      for(let i=0;i<10;i++){
+        const a=-Math.PI/2+i*Math.PI/5;
+        points.push([cx+Math.cos(a)*rx*(i%2?.44:1),cy+Math.sin(a)*ry*(i%2?.44:1)]);
+      }
+      polygon(ctx,points);break;
+    }
+    case 'parallelogram':{
+      const shift=w*.25;
+      polygon(ctx,[[left+shift,top],[left+w,top],[left+w-shift,top+h],[left,top+h]]);break;
+    }
+    case 'heart':{
+      ctx.moveTo(cx,top+h*.88);
+      ctx.bezierCurveTo(left-w*.13,top+h*.45,left+w*.04,top-h*.15,cx,top+h*.24);
+      ctx.bezierCurveTo(left+w*.96,top-h*.15,left+w*1.13,top+h*.45,cx,top+h*.88);
+      ctx.closePath();break;
+    }
+    default:return false;
+  }
+  ctx.stroke();
+  return true;
+}
+
 export function createStroke(tool, color, size, p) {
   return {id:id('stroke'), tool, color, size, points:[p]};
 }
@@ -40,21 +122,24 @@ function renderOne(ctx, stroke, width, height) {
   const pressure=pts[0].p||0.5;
   ctx.lineWidth=base*thick*(0.7+pressure*0.6);
   const first=pts[0], last=pts[pts.length-1];
-  if(stroke.tool==='line'){
-    ctx.beginPath();
-    ctx.moveTo(first.x*width,first.y*height);
-    ctx.lineTo(last.x*width,last.y*height);
-    ctx.stroke();
-  }else if(stroke.tool==='rectangle'){
-    ctx.strokeRect(first.x*width,first.y*height,(last.x-first.x)*width,(last.y-first.y)*height);
+  if(isShape(stroke.tool)){
+    drawShape(ctx,stroke,width,height);
   }else if(pts.length===1){
     ctx.beginPath();
     ctx.arc(first.x*width,first.y*height,Math.max(0.75,ctx.lineWidth/2),0,Math.PI*2);
     ctx.fill();
   }else{
+    // Smooth quadratic midpoints using coalesced Pencil samples;
+    // existing stored points remain unchanged and backwards compatible.
     ctx.beginPath();
     ctx.moveTo(first.x*width,first.y*height);
-    for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x*width,pts[i].y*height);
+    for(let i=1;i<pts.length-1;i++){
+      const p=pts[i],next=pts[i+1];
+      ctx.quadraticCurveTo(p.x*width,p.y*height,
+        (p.x+next.x)*width/2,(p.y+next.y)*height/2);
+    }
+    const end=pts[pts.length-1];
+    ctx.lineTo(end.x*width,end.y*height);
     ctx.stroke();
   }
   ctx.restore();
@@ -66,8 +151,8 @@ export function renderStrokes(ctx,strokes,width,height){
 
 /**
  * Draws directly on a canvas without turning handwriting into DOM text.
- * Finger touches are suppressed while Apple Pencil is active or just used,
- * reducing accidental palm marks. Typing still uses a separate Text tool.
+ * Only pointerdown contacts from pointerType='pen' can create marks.
+ * Finger, palm, hover, and mouse never draw. Typing uses a separate Text tool.
  */
 export function mountInkCanvas(canvas,{
   initialStrokes=[],onCommit=()=>{},getTool=()=> 'pen',
@@ -75,7 +160,7 @@ export function mountInkCanvas(canvas,{
 }={}){
   let strokes=clone(initialStrokes);
   let history=[],future=[],active=null,disposed=false,paintRequest=0;
-  let lastPenTime=0,needsBase=false;
+  let needsBase=false;
   const limit=50;
   const ctx=canvas.getContext('2d',{alpha:true,desynchronized:true});
   const backing=document.createElement('canvas');
@@ -141,7 +226,7 @@ export function mountInkCanvas(canvas,{
     const p=point(e,rect);
     if(active.tool==='eraser'){erased(p);return;}
     const s=active.stroke;if(!s)return;
-    if(active.tool==='line'||active.tool==='rectangle'){
+    if(isShape(active.tool)){
       s.points.length=1;s.points.push(p);
     }else{
       const prev=s.points[s.points.length-1];
@@ -150,15 +235,14 @@ export function mountInkCanvas(canvas,{
   }
   function down(e){
     if(disposed||active)return;
-    if(e.pointerType==='mouse'&&e.button!==0)return;
-    const type=e.pointerType||'mouse';
-    if(type==='pen')lastPenTime=Date.now();
-    if(type==='touch'&&(pencilOnly()||Date.now()-lastPenTime<850)){
+    // A pointerdown from the Pencil tip is a real contact. Hover, fingers,
+    // palms and mouse clicks must never add marks to the handwriting canvas.
+    if(e.pointerType!=='pen'){
       if(e.cancelable)e.preventDefault();
       return;
     }
     const tool=getTool();
-    if(!['pen','highlighter','eraser','line','rectangle'].includes(tool))return;
+    if(!['pen','highlighter','eraser'].includes(tool)&&!isShape(tool))return;
     if(!syncSize())return;
     if(e.cancelable)e.preventDefault();
     try{canvas.setPointerCapture?.(e.pointerId);}catch{}
@@ -174,9 +258,8 @@ export function mountInkCanvas(canvas,{
   function move(e){
     if(disposed||!active||e.pointerId!==active.pointerId)return;
     if(e.cancelable)e.preventDefault();
-    if(e.pointerType==='pen')lastPenTime=Date.now();
-    const isShape=active.tool==='line'||active.tool==='rectangle';
-    const events=!isShape&&typeof e.getCoalescedEvents==='function' ? e.getCoalescedEvents() : null;
+    const shape=isShape(active.tool);
+    const events=!shape&&typeof e.getCoalescedEvents==='function' ? e.getCoalescedEvents() : null;
     if(events?.length){
       for(const ev of events)sample(ev);
       const last=events[events.length-1];

@@ -5,7 +5,7 @@
  */
 export const SCHEMA_VERSION = 1;
 export const PAPER_TYPES = Object.freeze(['blank','ruled','grid','dots','cornell']);
-export const TOOL_TYPES = Object.freeze(['pen','highlighter','eraser','line','rectangle']);
+export const TOOL_TYPES = Object.freeze(['pen','highlighter','eraser','line','rectangle','rounded-rectangle','ellipse','circle','triangle','arrow','diamond','pentagon','hexagon','star','parallelogram','heart']);
 export const NOTE_TEMPLATES = Object.freeze(['blank','lecture','cornell','problem','lab','reading','revision']);
 export const isoNow = () => new Date().toISOString();
 export const id = (prefix='id') => `${prefix}_${typeof crypto!=='undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)+Date.now().toString(36)}`;
@@ -18,7 +18,7 @@ export function initialWorkspace() {
   const stamp=isoNow();
   return {schemaVersion:SCHEMA_VERSION,id:id('workspace'),createdAt:stamp,updatedAt:stamp,revision:0,
     subjects:[],notes:[],tasks:[],flashcards:[],
-    settings:{defaultPaper:'blank',pencilOnly:false,autosave:true,lastNoteId:null},
+    settings:{defaultPaper:'blank',pencilOnly:true,autosave:true,lastNoteId:null},
   };
 }
 /** Reject corrupt/incompatible restores rather than quietly overwriting good data. */

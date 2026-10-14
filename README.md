@@ -55,3 +55,7 @@ The v6 Pencil renderer no longer redraws every saved stroke for every pointer mo
 ## Four-position rounded toolbar
 
 The iPad editor now uses a pill-shaped toolbar with four fixed positions. Tap the small four-way position button beside the drag grip to choose **Top**, **Bottom**, **Left** or **Right**. Top and Bottom are horizontal; Left and Right are vertical. You can also drag the grip and release it to snap to the nearest screen edge. The position is remembered on this browser/device. This does not change note contents, the ink engine, or the IndexedDB workspace schema.
+
+## Apple Pencil-only ink and more shapes (v8)
+
+Drawing starts only from a direct Apple Pencil `pointerdown` contact (`pointerType: pen`) in Safari. Finger and mouse input cannot add ink, erase, or create shapes; toolbar buttons still work with touch. The Text tool remains available for typing. Pencil strokes are rendered using smoother quadratic curves while retaining the original saved point format. Choose the new **Shapes** button for line, rectangle, rounded rectangle, ellipse, circle, triangle, arrow, diamond, pentagon, hexagon, star, parallelogram or heart. Shape previews are drawn from Pencil drag start/end points and saved like ordinary strokes. These features have not yet been benchmarked on a physical iPad.

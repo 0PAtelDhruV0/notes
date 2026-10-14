@@ -2,7 +2,7 @@
  * Temporary wiring harness, NOT the final interface.
  * Replace this file with your own UI/UX. The data layer is src/app.js.
  */
-import {mountInkCanvas} from '../editor/ink.js';
+import {mountInkCanvas,SHAPE_TYPES} from '../editor/ink.js';
 import {NOTE_TEMPLATES,PAPER_TYPES} from '../core/model.js';
 const $=(query,root=document)=>root.querySelector(query);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -40,8 +40,8 @@ export function mountDeveloperShell(app){
       screen.innerHTML=`<div class="screen-header"><h1>Edit note</h1><div class="inline"><button data-action="back-to-notes">← Library</button><button data-action="trash-note">Move to Trash</button></div></div>
         <div class="fields"><div class="field"><label for="note-title">Title</label><input id="note-title" value="${escape(n.title)}"></div><div class="field"><label for="note-tags">Tags (comma-separated)</label><input id="note-tags" value="${escape(n.tags.join(', '))}"></div></div>
         <div class="inline"><label><input id="star-note" type="checkbox" ${n.starred?'checked':''}> Starred</label><label for="review-date">Review on</label><input id="review-date" type="date" value="${escape((n.reviewAt||'').slice(0,10))}"></div>
-        <div class="inline" style="margin:12px 0"><span>Tool:</span>${['type','pen','highlighter','eraser','line','rectangle'].map(t=>`<button type="button" data-action="tool" data-tool="${t}" ${tool===t?'aria-current="page"':''}>${t}</button>`).join('')}<label for="pen-color">Ink</label><input id="pen-color" type="color" value="${color}"><label for="pen-size">Size</label><input id="pen-size" type="range" min="1" max="14" value="${size}"><button data-action="undo">Undo</button><button data-action="redo">Redo</button><button data-action="clear-ink">Clear ink</button></div>
-        <div class="inline" style="margin-bottom:12px"><label>Paper <select id="paper-choice">${opts(PAPER_TYPES,page.paper)}</select></label><label><input type="checkbox" id="pencil-only" ${app.store.snapshot.settings.pencilOnly?'checked':''}> Pencil only</label><button data-action="add-page">+ Page</button><button data-action="duplicate-page">Duplicate page</button><button data-action="delete-page">Delete page</button><button data-action="attach">Attach PDF / image</button></div>
+        <div class="inline" style="margin:12px 0"><span>Tool:</span>${['type','pen','highlighter','eraser'].map(t=>`<button type="button" data-action="tool" data-tool="${t}" ${tool===t?'aria-current="page"':''}>${t}</button>`).join('')}<button type="button" data-action="toggle-shapes" id="shapes-trigger" aria-haspopup="true" aria-expanded="false" ${SHAPE_TYPES.includes(tool)?'aria-current="page"':''}>Shapes</button><div class="shape-palette" id="shape-palette" role="group" aria-label="Choose a shape">${SHAPE_TYPES.map(t=>`<button type="button" data-action="tool" data-tool="${t}" ${tool===t?'aria-current="page"':''}>${t.replaceAll('-',' ')}</button>`).join('')}</div><label for="pen-color">Ink</label><input id="pen-color" type="color" value="${color}"><label for="pen-size">Size</label><input id="pen-size" type="range" min="1" max="14" value="${size}"><button data-action="undo">Undo</button><button data-action="redo">Redo</button><button data-action="clear-ink">Clear ink</button></div>
+        <div class="inline" style="margin-bottom:12px"><label>Paper <select id="paper-choice">${opts(PAPER_TYPES,page.paper)}</select></label><span class="pencil-only-label" title="Drawing accepts Apple Pencil contact only">Apple Pencil only</span><button data-action="add-page">+ Page</button><button data-action="duplicate-page">Duplicate page</button><button data-action="delete-page">Delete page</button><button data-action="attach">Attach PDF / image</button></div>
         <div class="editor-layout"><aside class="page-list" aria-label="Pages">${n.pages.map((p,i)=>`<button type="button" data-action="select-page" data-id="${p.id}" ${p.id===pageId?'aria-current="page"':''}>Page ${i+1}</button>`).join('')}</aside>
           <section><div id="writing-surface" class="writing-surface ${tool==='type'?'mode-type':'mode-ink'}" data-paper="${page.paper}"><textarea id="page-text" placeholder="">${escape(page.text)}</textarea><canvas id="ink-canvas" aria-label="Handwriting canvas"></canvas></div></section>
         </div><section class="panel"><h3>Attached files</h3><div class="stack">${page.attachments.map(a=>`<div class="inline"><span>${escape(a.name)} (${Math.ceil(a.size/1024)} KB)</span><button data-action="open-attachment" data-id="${a.id}">Open</button><button data-action="remove-attachment" data-id="${a.id}">Remove</button></div>`).join('')||'<p class="muted">No files attached.</p>'}</div></section><p id="status-message" role="status"></p>`;
@@ -123,6 +123,11 @@ export function mountDeveloperShell(app){
       else if(action==='open-note')openNote(targetId);
       else if(action==='back-to-notes')navigate('notes');
       else if(action==='tool'){persistEditorInputs();tool=nextTool;render();}
+      else if(action==='toggle-shapes'){
+        const palette=$('#shape-palette'),trigger=$('#shapes-trigger');
+        const opened=palette?.classList.toggle('open');
+        trigger?.setAttribute('aria-expanded',String(!!opened));
+      }
       else if(action==='undo')ink?.undo();
       else if(action==='redo')ink?.redo();
       else if(action==='clear-ink'&&confirm('Clear all handwriting on this page?'))ink?.clear();
@@ -154,7 +159,7 @@ export function mountDeveloperShell(app){
   screen.addEventListener('change',e=>{
     try{
       if(e.target.id==='paper-choice'){persistEditorInputs();app.notes.updatePage(noteId,pageId,{paper:e.target.value});render();}
-      else if(e.target.id==='pencil-only')app.store.transact(ws=>{ws.settings.pencilOnly=e.target.checked;});
+      else if(e.target.id==='pencil-only'){}
       else if(e.target.id==='star-note')app.notes.update(noteId,{starred:e.target.checked});
       else if(e.target.id==='note-tags')app.notes.update(noteId,{tags:e.target.value.split(',')});
       else if(e.target.id==='review-date')app.notes.update(noteId,{reviewAt:e.target.value?new Date(`${e.target.value}T12:00:00`).toISOString():null});

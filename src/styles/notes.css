@@ -323,3 +323,56 @@ body.editor-mode .floating-tools.dock-right .floating-popover{
  body.editor-mode .floating-tools.dock-top{top:calc(102px + env(safe-area-inset-top, 0px))!important}
  body.editor-mode .floating-tools .toolbar-dock-menu{width:200px}
 }
+
+/* Pencil-only drawing and compact shape selector; keep toolbar docking v7. */
+body.editor-mode .page-actions .pencil-only-label{
+ display:inline-flex;align-items:center;padding:7px 9px;
+ background:#342b42;border:1px solid #65527f;border-radius:10px;
+ font-size:11px;font-weight:700;color:#e0d0ff;
+}
+body.editor-mode .floating-tools .shape-palette{
+ display:none;position:absolute;z-index:120;
+ width:290px;max-width:calc(100vw - 24px);
+ grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+ padding:13px;background:rgba(36,30,46,.99);
+ border:1px solid #645276;box-shadow:0 18px 42px #0008;
+ border-radius:22px;white-space:normal;
+}
+body.editor-mode .floating-tools .shape-palette.open{display:grid}
+body.editor-mode .floating-tools .shape-palette button{
+ min-width:0;width:100%;height:51px;
+ display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;
+ padding:5px 2px;background:#322a40;color:#d7cbea;
+ border:1px solid #473b58;border-radius:13px;
+ font-size:10px;font-weight:650;text-transform:none;
+}
+body.editor-mode .floating-tools .shape-palette button svg{
+ width:21px;height:21px;
+}
+body.editor-mode .floating-tools .shape-palette button:hover{
+ background:#4a3b62;color:#fff;
+}
+body.editor-mode .floating-tools .shape-palette button[aria-current="page"]{
+ background:#a88dfb;color:#21162f;border-color:#cdb9ff;
+}
+body.editor-mode .floating-tools.dock-bottom .shape-palette{
+ left:50%;transform:translateX(-50%);bottom:calc(100% + 14px);top:auto;right:auto;
+}
+body.editor-mode .floating-tools.dock-top .shape-palette{
+ left:50%;transform:translateX(-50%);top:calc(100% + 14px);bottom:auto;right:auto;
+}
+body.editor-mode .floating-tools.dock-left .shape-palette{
+ left:calc(100% + 14px);right:auto;top:50%;bottom:auto;transform:translateY(-50%);
+}
+body.editor-mode .floating-tools.dock-right .shape-palette{
+ right:calc(100% + 14px);left:auto;top:50%;bottom:auto;transform:translateY(-50%);
+}
+body.editor-mode .floating-tools .shape-trigger[aria-current="page"]{
+ background:#a88dfb!important;color:#21162f!important;
+}
+@media(max-width:600px){
+ body.editor-mode .floating-tools .shape-palette{
+  grid-template-columns:repeat(3,minmax(0,1fr));width:236px;gap:5px;padding:10px;
+ }
+ body.editor-mode .floating-tools .shape-palette button{height:43px;font-size:9px}
+}
