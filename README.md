@@ -59,3 +59,7 @@ The iPad editor now uses a pill-shaped toolbar with four fixed positions. Tap th
 ## Apple Pencil-only ink and more shapes (v8)
 
 Drawing starts only from a direct Apple Pencil `pointerdown` contact (`pointerType: pen`) in Safari. Finger and mouse input cannot add ink, erase, or create shapes; toolbar buttons still work with touch. The Text tool remains available for typing. Pencil strokes are rendered using smoother quadratic curves while retaining the original saved point format. Choose the new **Shapes** button for line, rectangle, rounded rectangle, ellipse, circle, triangle, arrow, diamond, pentagon, hexagon, star, parallelogram or heart. Shape previews are drawn from Pencil drag start/end points and saved like ordinary strokes. These features have not yet been benchmarked on a physical iPad.
+
+## Two-finger double-tap undo (v9)
+
+On the white canvas with a drawing tool selected, quickly tap twice using **two fingers simultaneously**. Each of the two taps must be short and stationary, and the second must follow the first promptly. Only a completed double-tap invokes the existing stroke undo; a single two-finger tap, a pinch, a swipe, a three-finger gesture, or Pencil hover does not. Undo continues to work with the toolbar and keyboard. The gesture works locally in iPad Safari; physical device verification is recommended.

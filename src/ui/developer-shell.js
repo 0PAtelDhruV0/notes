@@ -3,6 +3,7 @@
  * Replace this file with your own UI/UX. The data layer is src/app.js.
  */
 import {mountInkCanvas,SHAPE_TYPES} from '../editor/ink.js';
+import {mountTwoFingerDoubleTap} from '../editor/gestures.js';
 import {NOTE_TEMPLATES,PAPER_TYPES} from '../core/model.js';
 const $=(query,root=document)=>root.querySelector(query);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -10,7 +11,7 @@ const opts=(values,chosen='')=>values.map(v=>`<option value="${escape(v)}" ${v==
 const saveAs=(filename,blob)=>{const url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download=filename;document.body.append(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),60_000);};
 export function mountDeveloperShell(app){
   const nav=$('#navigation'),screen=$('#screen'),fileInput=$('#attach-file');
-  let screenName='home',noteId=null,pageId=null,ink=null,tool='pen',color='#202020',size=3,inputTimeout=null;
+  let screenName='home',noteId=null,pageId=null,ink=null,twoFingerUndo=null,tool='pen',color='#202020',size=3,inputTimeout=null;
   const sectionNames=[['home','Home'],['notes','Notes'],['planner','Planner'],['study','Study'],['files','Files'],['trash','Trash']];
   app.store.subscribe((_,status,error)=>{$('#save-status').textContent=status+(error?' · '+error.message:'');});
   $('#save-status').textContent=app.store.status;
@@ -27,6 +28,7 @@ export function mountDeveloperShell(app){
   }
   function navigate(destination){persistEditorInputs();ink?.destroy();ink=null;screenName=destination;render();screen.focus();}
   function render(){
+    twoFingerUndo?.destroy();twoFingerUndo=null;
     nav.innerHTML=sectionNames.map(([id,label])=>`<button type="button" data-action="navigate" data-to="${id}" ${screenName===id?'aria-current="page"':''}>${label}</button>`).join('');
     if(screenName==='home'){
       const ws=app.store.snapshot;
@@ -63,6 +65,10 @@ export function mountDeveloperShell(app){
         initialStrokes:page.strokes,
         getTool:()=>tool,getColor:()=>color,getSize:()=>size,pencilOnly:()=>app.store.snapshot.settings.pencilOnly,
         onCommit:strokes=>app.notes.updatePage(noteId,pageId,{strokes}),
+      });
+      twoFingerUndo=mountTwoFingerDoubleTap($('#writing-surface'),{
+        enabled:()=>screenName==='editor'&&tool!=='type',
+        onUndo:()=>ink?.undo(),
       });
     }else if(screenName==='planner'){
       screen.innerHTML=`<div class="screen-header"><h1>Planner</h1></div><form id="add-task" class="fields"><div class="field"><label for="task-title">Assignment / task</label><input name="title" id="task-title" required></div><div class="field"><label for="task-date">Due date</label><input type="date" id="task-date" name="due"></div><button type="submit">Add task</button></form><section class="panel"><h2>Tasks</h2>${app.study.listTasks().map(t=>`<div class="row inline"><label class="inline"><input data-task="${t.id}" type="checkbox" ${t.done?'checked':''}> ${escape(t.title)}</label><small class="muted">${escape((t.dueAt||'').slice(0,10))}</small><button data-action="delete-task" data-id="${t.id}">Delete</button></div>`).join('')||'<p class="muted">No tasks yet.</p>'}</section>`;
@@ -191,5 +197,5 @@ export function mountDeveloperShell(app){
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&screenName==='editor'&&document.activeElement?.id!=='page-text'&&document.activeElement?.id!=='note-title'){e.preventDefault();if(e.shiftKey)ink?.redo();else ink?.undo();}});
   window.addEventListener('pagehide',persistEditorInputs);
   render();
-  return {showNewNote,navigate,render,destroy(){ink?.destroy();clearTimeout(inputTimeout);}};
+  return {showNewNote,navigate,render,destroy(){twoFingerUndo?.destroy();ink?.destroy();clearTimeout(inputTimeout);}};
 }
