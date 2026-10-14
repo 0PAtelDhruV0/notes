@@ -37,3 +37,13 @@ body.editor-mode #editor-page-menu span{font-size:11px}
  body.editor-mode .editor-meta{top:56px}
  body.editor-mode .focus-layout{height:auto}
 }
+
+#navigation button.nav-shortcut{border:0;background:transparent;color:#a6a0b0;display:flex;align-items:center;gap:12px;text-align:left;min-height:39px;padding:9px 12px;border-radius:10px;font-size:12px;font-weight:700}
+#navigation button.nav-shortcut:hover{background:#24212b;color:#fff}
+#navigation button.nav-shortcut svg{width:17px;height:17px;opacity:.83}
+.subject-filter{margin:4px 0 20px;padding:10px 0;border-bottom:1px solid #2b2833}
+.subject-hint{font-weight:400;color:#928b9a;margin-left:8px;font-size:11px}
+.subject-filter .subject-chips{grid-template-columns:repeat(3,minmax(0,1fr))}
+.subject-filter .subject-chips button{padding:10px;font-size:11px}
+@media(max-width:800px){.subject-filter .subject-chips{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#navigation button.nav-shortcut{justify-content:center;padding:9px 2px}#navigation button.nav-shortcut span{display:none}#navigation button.nav-shortcut svg{width:19px}}
