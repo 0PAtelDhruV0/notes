@@ -11,14 +11,14 @@ export const isoNow = () => new Date().toISOString();
 export const id = (prefix='id') => `${prefix}_${typeof crypto!=='undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)+Date.now().toString(36)}`;
 export const clone = v => structuredClone(v);
 export const normalize = text => String(text??'').trim().replace(/\s+/g,' ').toLocaleLowerCase();
-export function blankPage(paper='ruled') {
+export function blankPage(paper='blank') {
   return {id:id('page'),paper:PAPER_TYPES.includes(paper)?paper:'ruled',text:'',strokes:[],attachments:[],createdAt:isoNow(),updatedAt:isoNow()};
 }
 export function initialWorkspace() {
   const stamp=isoNow();
   return {schemaVersion:SCHEMA_VERSION,id:id('workspace'),createdAt:stamp,updatedAt:stamp,revision:0,
     subjects:[],notes:[],tasks:[],flashcards:[],
-    settings:{defaultPaper:'ruled',pencilOnly:false,autosave:true,lastNoteId:null},
+    settings:{defaultPaper:'blank',pencilOnly:false,autosave:true,lastNoteId:null},
   };
 }
 /** Reject corrupt/incompatible restores rather than quietly overwriting good data. */

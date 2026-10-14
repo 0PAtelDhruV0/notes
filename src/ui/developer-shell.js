@@ -43,7 +43,7 @@ export function mountDeveloperShell(app){
         <div class="inline" style="margin:12px 0"><span>Tool:</span>${['type','pen','highlighter','eraser','line','rectangle'].map(t=>`<button type="button" data-action="tool" data-tool="${t}" ${tool===t?'aria-current="page"':''}>${t}</button>`).join('')}<label for="pen-color">Ink</label><input id="pen-color" type="color" value="${color}"><label for="pen-size">Size</label><input id="pen-size" type="range" min="1" max="14" value="${size}"><button data-action="undo">Undo</button><button data-action="redo">Redo</button><button data-action="clear-ink">Clear ink</button></div>
         <div class="inline" style="margin-bottom:12px"><label>Paper <select id="paper-choice">${opts(PAPER_TYPES,page.paper)}</select></label><label><input type="checkbox" id="pencil-only" ${app.store.snapshot.settings.pencilOnly?'checked':''}> Pencil only</label><button data-action="add-page">+ Page</button><button data-action="duplicate-page">Duplicate page</button><button data-action="delete-page">Delete page</button><button data-action="attach">Attach PDF / image</button></div>
         <div class="editor-layout"><aside class="page-list" aria-label="Pages">${n.pages.map((p,i)=>`<button type="button" data-action="select-page" data-id="${p.id}" ${p.id===pageId?'aria-current="page"':''}>Page ${i+1}</button>`).join('')}</aside>
-          <section><div id="writing-surface" class="writing-surface ${tool==='type'?'mode-type':'mode-ink'}" data-paper="${page.paper}"><textarea id="page-text" placeholder="Type your notes on this page">${escape(page.text)}</textarea><canvas id="ink-canvas" aria-label="Handwriting canvas"></canvas></div></section>
+          <section><div id="writing-surface" class="writing-surface ${tool==='type'?'mode-type':'mode-ink'}" data-paper="${page.paper}"><textarea id="page-text" placeholder="">${escape(page.text)}</textarea><canvas id="ink-canvas" aria-label="Handwriting canvas"></canvas></div></section>
         </div><section class="panel"><h3>Attached files</h3><div class="stack">${page.attachments.map(a=>`<div class="inline"><span>${escape(a.name)} (${Math.ceil(a.size/1024)} KB)</span><button data-action="open-attachment" data-id="${a.id}">Open</button><button data-action="remove-attachment" data-id="${a.id}">Remove</button></div>`).join('')||'<p class="muted">No files attached.</p>'}</div></section><p id="status-message" role="status"></p>`;
       if(tool!=='type')$('#page-text').readOnly=true;
       ink?.destroy();
@@ -78,13 +78,11 @@ export function mountDeveloperShell(app){
     persistEditorInputs();
     let dialog=$('#create-dialog');if(dialog)dialog.remove();
     dialog=document.createElement('dialog');dialog.id='create-dialog';
-    dialog.innerHTML=`<form id="create-form" class="stack"><h2>New note — classification</h2><p class="muted small">Choose a subject and subsection. Other is always available as the last option.</p>
+    dialog.innerHTML=`<form id="create-form" class="stack"><h2>New blank note</h2><p class="muted small">Choose a subject and subsection. Your page will open completely blank.</p>
       <div class="field"><label for="catalog-search">Search the worldwide subject directory</label><input id="catalog-search" placeholder="Search subject or specialization…"></div>
       <div class="fields"><div class="field"><label for="subject-choice">Subject</label><select id="subject-choice" required></select><input id="custom-subject" placeholder="New subject name" hidden></div>
         <div class="field"><label for="subsection-choice">Subsection</label><select id="subsection-choice" required></select><input id="custom-subsection" placeholder="New subsection name" hidden></div></div>
-      <div class="fields"><div class="field"><label for="create-title">Title</label><input id="create-title" value="Untitled note" required></div>
-        <div class="field"><label for="note-template">Template</label><select id="note-template">${opts(NOTE_TEMPLATES,'lecture')}</select></div>
-        <div class="field"><label for="create-paper">Paper</label><select id="create-paper">${opts(PAPER_TYPES,'ruled')}</select></div></div>
+      <div class="fields"><div class="field"><label for="create-title">Note title</label><input id="create-title" value="Untitled note" required></div></div>
       <div class="inline"><button type="button" id="cancel-create">Cancel</button><button type="submit">Create note</button></div></form>`;
     document.body.append(dialog);
     const search=$('#catalog-search',dialog),subject=$('#subject-choice',dialog),sub=$('#subsection-choice',dialog),otherSubject=$('#custom-subject',dialog),otherSub=$('#custom-subsection',dialog);
@@ -99,7 +97,7 @@ export function mountDeveloperShell(app){
       const chosenSubject=subject.value==='__other__'?otherSubject.value.trim():subject.value;
       const chosenSub=sub.value==='__other__'?otherSub.value.trim():sub.value;
       if(!chosenSubject||!chosenSub){alert('Choose a subject and a subsection');return;}
-      try{const created=app.notes.create({subjectName:chosenSubject,subsectionName:chosenSub,title:$('#create-title',dialog).value,template:$('#note-template',dialog).value,paper:$('#create-paper',dialog).value});dialog.close();openNote(created.id);}catch(error){alert(error.message);}
+      try{const created=app.notes.create({subjectName:chosenSubject,subsectionName:chosenSub,title:$('#create-title',dialog).value,template:'blank',paper:'blank'});dialog.close();openNote(created.id);}catch(error){alert(error.message);}
     });
     fillSubjects();dialog.showModal();
   }
@@ -116,7 +114,7 @@ export function mountDeveloperShell(app){
       else if(action==='undo')ink?.undo();
       else if(action==='redo')ink?.redo();
       else if(action==='clear-ink'&&confirm('Clear all handwriting on this page?'))ink?.clear();
-      else if(action==='add-page'){persistEditorInputs();pageId=app.notes.addPage(noteId).id;render();}
+      else if(action==='add-page'){persistEditorInputs();pageId=app.notes.addPage(noteId,{paper:'blank'}).id;render();}
       else if(action==='duplicate-page'){persistEditorInputs();pageId=app.notes.duplicatePage(noteId,pageId).id;render();}
       else if(action==='delete-page'&&confirm('Delete this page?')){persistEditorInputs();app.notes.deletePage(noteId,pageId);pageId=app.notes.get(noteId).lastPageId;render();}
       else if(action==='select-page'){persistEditorInputs();app.notes.setLastPage(noteId,targetId);pageId=targetId;render();}

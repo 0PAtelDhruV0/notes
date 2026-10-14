@@ -17,10 +17,10 @@ Then open http://localhost:5173. No npm dependencies are required.
 ## Dashboard and note editor
 
 - Dashboard: overview, recent notes, subjects, favorites, search, planner, flashcards, attachments and recently deleted.
-- Create a note: choose a subject and subsection from the offline worldwide directory, or enter a custom subject/subsection. Choose a page template and paper.
-- Open any note: dashboard and navigation disappear, leaving a **full-viewport writing canvas**.
+- Create a note: choose a subject and subsection from the offline worldwide directory, or enter a custom subject/subsection. Every new note opens as a completely **blank white page**, with no prefilled template or ruled lines. Templates are planned for a later release.
+- Open any note: dashboard, permanent page sidebar, and navigation disappear. The **white writing sheet fills the full iPad viewport**; only compact floating navigation buttons and the draggable tool palette remain.
 - Floating toolbar: drag the dotted grip to move it; position is remembered locally. Pen, highlighter, eraser, text, line, rectangle, ink color, pen size, undo/redo, and paper selection.
-- Pages and attachments: use **Pages** in the editor header to show the compact page-management popover.
+- Pages, attachments, and optional paper styles: use **Pages** in the floating top-right control to open the compact page-management popover, including page switching. New pages default to white and blank.
 - Text and ink autosave locally through the existing IndexedDB store. Paper styles: blank, ruled, grid, dots, Cornell.
 - Touch, mouse, and Apple Pencil input are handled through browser Pointer Events. Native Pencil gestures and advanced PDF markup are not implemented.
 
@@ -46,3 +46,4 @@ Run `npm test` to check the note engine and `npm run check` for syntax and unit 
 ### Important limits
 
 This is an iPad-friendly web app, not a replacement for native Goodnotes or Notability. Validate Apple Pencil behavior in Safari on your own iPad, particularly after iPadOS updates.
+> Existing pages are never wiped by this UI update. Older notes that already contain lecture text or use ruled/grid paper retain their saved content and paper type. New notes and newly added pages default to blank white.

@@ -40,7 +40,7 @@ export function enhanceNotesUI(app,shell){
  }
  function createPreview(n){
   const text=(n.pages?.[0]?.text||'').trim().slice(0,150);
-  return '<span class="paper-thumb" data-paper="'+esc(n.pages?.[0]?.paper||'ruled')+'"><span>'+esc(text||'A new page for your ideas…')+'</span></span>';
+  return '<span class="paper-thumb" data-paper="'+esc(n.pages?.[0]?.paper||'ruled')+'"><span>'+esc(text||'')+'</span></span>';
  }
  function decorateRows(){
   for(const b of screen.querySelectorAll('.note-list button[data-id]')){
@@ -105,7 +105,7 @@ export function enhanceNotesUI(app,shell){
   const grip=document.createElement('button');grip.id='toolbar-grip';grip.className='tool-grip';grip.type='button';grip.title='Drag toolbar';grip.setAttribute('aria-label','Drag toolbar');grip.innerHTML=svg('grip');bar.prepend(grip);
   bar.querySelectorAll('button[data-action="tool"]').forEach(b=>{let name=b.dataset.tool;b.title=name==='type'?'Text':name[0].toUpperCase()+name.slice(1);b.setAttribute('aria-label',b.title);b.innerHTML=svg(name);b.classList.add('tool-btn');});
   ['undo','redo','clear-ink'].forEach(name=>{const b=bar.querySelector('[data-action="'+name+'"]');if(!b)return;b.title=name==='clear-ink'?'Clear handwriting':name[0].toUpperCase()+name.slice(1);b.setAttribute('aria-label',b.title);b.innerHTML=svg(name==='clear-ink'?'trash':name);b.classList.add('tool-btn');});
-  const paper=options?.querySelector('#paper-choice')?.closest('label');if(paper){paper.classList.add('toolbar-paper');bar.append(paper);}
+  const paper=options?.querySelector('#paper-choice')?.closest('label');if(paper){paper.classList.add('page-paper-option');}
   if(options){
    const tags=screen.querySelector('#note-tags')?.closest('.field');
    if(tags){tags.classList.add('page-meta-field');options.append(tags);}
@@ -118,6 +118,11 @@ export function enhanceNotesUI(app,shell){
   const size=bar.querySelector('#pen-size');if(size){size.setAttribute('aria-label','Pen thickness');}
   if(options)options.querySelectorAll('button[data-action]').forEach(b=>{const a=b.dataset.action;b.classList.add('small-action');if(a==='add-page')b.innerHTML=svg('plus')+' Page';});
   const head=screen.querySelector('.editor-layout');head?.classList.add('focus-layout');
+  // Move the page selector into the Pages popover. The white canvas can now
+  // occupy every available pixel with no permanent sidebar or navigation.
+  const pageList=head?.querySelector('.page-list');
+  if(pageList&&options){pageList.classList.add('popover-pages');options.prepend(pageList);}
+  if(trash&&options){trash.classList.add('popover-delete');options.append(trash);}
   const attachmentPanel=screen.querySelector('.editor-layout + .panel');
   if(attachmentPanel&&options){
     attachmentPanel.classList.add('attachment-panel');
@@ -200,8 +205,19 @@ export function enhanceNotesUI(app,shell){
  document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='n'){e.preventDefault();shell.showNewNote();}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();document.getElementById('header-search')?.focus();}
-  if(e.key==='Escape'&&document.body.classList.contains('editor-mode')&&!document.querySelector('dialog[open]')){shell.navigate('notes');}
+  if(e.key==='Escape'&&document.body.classList.contains('editor-mode')&&!document.querySelector('dialog[open]')){
+    const menu=screen.querySelector('.page-actions.open');
+    if(menu){menu.classList.remove('open');screen.querySelector('#editor-page-menu')?.setAttribute('aria-expanded','false');}
+    else shell.navigate('notes');
+   }
  });
+ screen.addEventListener('pointerdown',e=>{
+   const open=screen.querySelector('.page-actions.open');
+   if(open&&!open.contains(e.target)&&!e.target.closest('#editor-page-menu')){
+    open.classList.remove('open');
+    screen.querySelector('#editor-page-menu')?.setAttribute('aria-expanded','false');
+   }
+  });
  window.addEventListener('resize',()=>{const b=screen.querySelector('.floating-tools');if(b&&!drag)positionToolbar(b);});
  app.store.subscribe((_,status)=>{const el=document.getElementById('save-status');if(el)el.textContent=status;});
  decorate();
