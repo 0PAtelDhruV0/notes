@@ -376,3 +376,55 @@ body.editor-mode .floating-tools .shape-trigger[aria-current="page"]{
  }
  body.editor-mode .floating-tools .shape-palette button{height:43px;font-size:9px}
 }
+
+/* Notes v10 — smooth scale/pan without changing saved ink coordinates. */
+body.editor-mode .focus-layout>section{
+ touch-action:none!important;
+ overflow:hidden!important;
+}
+body.editor-mode #writing-surface{
+ transform-origin:0 0!important;
+ backface-visibility:hidden;
+ will-change:transform;
+ contain:layout style paint;
+}
+body.editor-mode .page-zoom-controls{
+ position:fixed;z-index:69;
+ right:calc(18px + env(safe-area-inset-right,0px));
+ bottom:calc(18px + env(safe-area-inset-bottom,0px));
+ display:flex;align-items:center;gap:4px;
+ height:43px;padding:5px;
+ background:rgba(35,31,44,.96);
+ border:1px solid #5b5266;border-radius:99px;
+ box-shadow:0 9px 28px #0005;
+ backdrop-filter:blur(18px);
+ -webkit-backdrop-filter:blur(18px);
+ user-select:none;-webkit-user-select:none;
+}
+body.editor-mode .page-zoom-controls button{
+ display:grid;place-items:center;
+ width:34px;height:33px;min-width:34px;
+ color:#e8e0f4;background:transparent;border:0;border-radius:99px;
+ font-size:22px;font-weight:500;line-height:1;
+ touch-action:manipulation;
+}
+body.editor-mode .page-zoom-controls button[data-zoom=reset]{
+ min-width:64px;width:auto;padding:0 8px;
+ font-size:12px;font-weight:750;font-variant-numeric:tabular-nums;
+ color:#c8b7e7;
+}
+body.editor-mode .page-zoom-controls button:hover{
+ background:#4a405b;color:#fff;
+}
+body.editor-mode .page-zoom-controls button:disabled{
+ opacity:.28;pointer-events:none;
+}
+@media(max-width:600px){
+ body.editor-mode .page-zoom-controls{
+  bottom:calc(10px + env(safe-area-inset-bottom,0px));
+  right:calc(10px + env(safe-area-inset-right,0px));
+  height:40px;
+ }
+ body.editor-mode .page-zoom-controls button{width:31px;height:30px;min-width:31px}
+ body.editor-mode .page-zoom-controls button[data-zoom=reset]{min-width:58px}
+}

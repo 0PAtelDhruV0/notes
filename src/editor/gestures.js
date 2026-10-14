@@ -91,7 +91,7 @@ export function mountTwoFingerDoubleTap(target,{
   target.addEventListener('touchmove',touchMove,opts);
   target.addEventListener('touchend',touchEnd,opts);
   target.addEventListener('touchcancel',touchCancel,opts);
-  return {destroy(){
+  return {reset,destroy(){
     if(disposed)return;
     disposed=true;reset();
     target.removeEventListener('touchstart',touchStart);

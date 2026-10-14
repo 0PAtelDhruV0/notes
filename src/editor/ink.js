@@ -107,6 +107,57 @@ export function strokeIntersectsPoint(stroke, needle, radius=0.02) {
   }
   return false;
 }
+/**
+ * Stabilize tiny digitizer jitter while preserving direction and corners.
+ * Original normalized points are NEVER changed, so backups remain compatible.
+ * Pressure bands are grouped to avoid a separate canvas stroke per raw sample.
+ */
+export function stabilizeInkPoints(points,width,height){
+  const raw=points.map(p=>({
+    x:p.x*width,y:p.y*height,
+    p:Math.max(0.05,Math.min(1,Number.isFinite(p.p)?p.p:0.5))
+  }));
+  if(raw.length<3)return raw;
+  return raw.map((p,i)=>{
+    if(i===0||i===raw.length-1)return p;
+    const a=raw[i-1],b=raw[i+1];
+    const distance=Math.hypot(b.x-a.x,b.y-a.y);
+    // Apply less smoothing at sharp turns: students' letters need corners.
+    const v1x=p.x-a.x,v1y=p.y-a.y,v2x=b.x-p.x,v2y=b.y-p.y;
+    const denom=Math.hypot(v1x,v1y)*Math.hypot(v2x,v2y);
+    const turning=denom?Math.max(-1,Math.min(1,(v1x*v2x+v1y*v2y)/denom)):1;
+    const blend=(turning<0.45?0.08:distance>28?0.09:0.20);
+    return {x:p.x*(1-2*blend)+(a.x+b.x)*blend,
+      y:p.y*(1-2*blend)+(a.y+b.y)*blend,
+      p:p.p*.65+(a.p+b.p)*.175};
+  });
+}
+function drawFluidStroke(ctx,raw,width,height,baseWidth){
+  const pts=stabilizeInkPoints(raw,width,height),len=pts.length;
+  const strokeWidth=p=>Math.max(0.72,baseWidth*(0.68+0.76*Math.max(0,Math.min(1,p))));
+  let lineWidth=strokeWidth(pts[0].p);
+  ctx.lineWidth=lineWidth;
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  if(len===2){
+    ctx.lineTo(pts[1].x,pts[1].y);
+    ctx.stroke();return;
+  }
+  for(let i=1;i<len-1;i++){
+    const p=pts[i],next=pts[i+1];
+    const mx=(p.x+next.x)/2,my=(p.y+next.y)/2;
+    ctx.quadraticCurveTo(p.x,p.y,mx,my);
+    const target=strokeWidth((p.p+next.p)/2);
+    // Change pressure in small bands; retain a continuous outline.
+    if(Math.abs(target-lineWidth)>=Math.max(0.16,baseWidth*.09)){
+      ctx.stroke();
+      ctx.beginPath();ctx.moveTo(mx,my);
+      lineWidth=target;ctx.lineWidth=lineWidth;
+    }
+  }
+  const last=pts[len-1];
+  ctx.lineTo(last.x,last.y);ctx.stroke();
+}
+
 function renderOne(ctx, stroke, width, height) {
   const pts=stroke.points||[];
   if(!pts.length)return;
@@ -118,29 +169,18 @@ function renderOne(ctx, stroke, width, height) {
   ctx.globalAlpha=stroke.tool==='highlighter' ? 0.28 : 1;
   const base=Math.max(0.75, (stroke.size||2)*width/800);
   const thick=stroke.tool==='highlighter' ? 5.3 : 1;
-  // Consistent path width avoids hundreds of expensive ctx.stroke() calls per frame.
-  const pressure=pts[0].p||0.5;
-  ctx.lineWidth=base*thick*(0.7+pressure*0.6);
-  const first=pts[0], last=pts[pts.length-1];
+  const first=pts[0];
   if(isShape(stroke.tool)){
+    ctx.lineWidth=base*thick;
     drawShape(ctx,stroke,width,height);
   }else if(pts.length===1){
+    const pressure=Number.isFinite(first.p)?first.p:0.5;
+    ctx.lineWidth=base*thick*(0.65+pressure*0.85);
     ctx.beginPath();
-    ctx.arc(first.x*width,first.y*height,Math.max(0.75,ctx.lineWidth/2),0,Math.PI*2);
+    ctx.arc(first.x*width,first.y*height,Math.max(0.65,ctx.lineWidth/2),0,Math.PI*2);
     ctx.fill();
   }else{
-    // Smooth quadratic midpoints using coalesced Pencil samples;
-    // existing stored points remain unchanged and backwards compatible.
-    ctx.beginPath();
-    ctx.moveTo(first.x*width,first.y*height);
-    for(let i=1;i<pts.length-1;i++){
-      const p=pts[i],next=pts[i+1];
-      ctx.quadraticCurveTo(p.x*width,p.y*height,
-        (p.x+next.x)*width/2,(p.y+next.y)*height/2);
-    }
-    const end=pts[pts.length-1];
-    ctx.lineTo(end.x*width,end.y*height);
-    ctx.stroke();
+    drawFluidStroke(ctx,pts,width,height,base*thick);
   }
   ctx.restore();
 }
@@ -175,8 +215,11 @@ export function mountInkCanvas(canvas,{
     const next=canvas.getBoundingClientRect();
     if(!next.width||!next.height)return false;
     rect={left:next.left,top:next.top,width:next.width,height:next.height};
-    // 1.75x is crisp on iPad, with substantially less raster work than 2x.
-    const dpr=Math.min(Number(globalThis.devicePixelRatio)||1,1.75);
+    // Limit total pixels at 200–300% zoom to avoid large iPad GPU allocations.
+    const preferred=Math.min(Number(globalThis.devicePixelRatio)||1,1.7);
+    const pixelBudget=6000000;
+    const budgetRatio=Math.min(1,Math.sqrt(pixelBudget/(next.width*next.height*preferred*preferred)));
+    const dpr=preferred*budgetRatio;
     const w=Math.max(1,Math.round(next.width*dpr));
     const h=Math.max(1,Math.round(next.height*dpr));
     if(force||canvas.width!==w||canvas.height!==h){
@@ -230,7 +273,8 @@ export function mountInkCanvas(canvas,{
       s.points.length=1;s.points.push(p);
     }else{
       const prev=s.points[s.points.length-1];
-      if(!prev||Math.abs(p.x-prev.x)>0.00008||Math.abs(p.y-prev.y)>0.00008)s.points.push(p);
+      // Ignore movements under half a display pixel to suppress sensor noise.
+      if(!prev||Math.hypot((p.x-prev.x)*rect.width,(p.y-prev.y)*rect.height)>=0.48)s.points.push(p);
     }
   }
   function down(e){

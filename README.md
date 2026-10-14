@@ -63,3 +63,9 @@ Drawing starts only from a direct Apple Pencil `pointerdown` contact (`pointerTy
 ## Two-finger double-tap undo (v9)
 
 On the white canvas with a drawing tool selected, quickly tap twice using **two fingers simultaneously**. Each of the two taps must be short and stationary, and the second must follow the first promptly. Only a completed double-tap invokes the existing stroke undo; a single two-finger tap, a pinch, a swipe, a three-finger gesture, or Pencil hover does not. Undo continues to work with the toolbar and keyboard. The gesture works locally in iPad Safari; physical device verification is recommended.
+
+## Pinch zoom, pan and pressure-aware handwriting (v10)
+
+Use a two-finger pinch on the writing sheet, or the **− / 100% / +** zoom controls in the bottom-right corner. The zoom range is **50% to 300%**, and dragging with two fingers pans an enlarged page. A two-finger double-tap still undoes the last stroke, while a pinch or pan cancels that gesture. Zoom changes are view-only and do not change note content or saved coordinates.
+
+Pen rendering now applies adaptive jitter filtering, quadratic centerline stabilization and variable-width pressure bands. Previous notes are rendered with the improved engine without any destructive conversion. The drawing canvases are capped at about six million pixels each to avoid extreme allocations on iPad when zoomed in.

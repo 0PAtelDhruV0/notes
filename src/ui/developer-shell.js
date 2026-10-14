@@ -4,6 +4,7 @@
  */
 import {mountInkCanvas,SHAPE_TYPES} from '../editor/ink.js';
 import {mountTwoFingerDoubleTap} from '../editor/gestures.js';
+import {mountPageZoom} from '../editor/zoom.js';
 import {NOTE_TEMPLATES,PAPER_TYPES} from '../core/model.js';
 const $=(query,root=document)=>root.querySelector(query);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -11,7 +12,7 @@ const opts=(values,chosen='')=>values.map(v=>`<option value="${escape(v)}" ${v==
 const saveAs=(filename,blob)=>{const url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download=filename;document.body.append(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),60_000);};
 export function mountDeveloperShell(app){
   const nav=$('#navigation'),screen=$('#screen'),fileInput=$('#attach-file');
-  let screenName='home',noteId=null,pageId=null,ink=null,twoFingerUndo=null,tool='pen',color='#202020',size=3,inputTimeout=null;
+  let screenName='home',noteId=null,pageId=null,ink=null,twoFingerUndo=null,pageZoom=null,tool='pen',color='#202020',size=3,inputTimeout=null;
   const sectionNames=[['home','Home'],['notes','Notes'],['planner','Planner'],['study','Study'],['files','Files'],['trash','Trash']];
   app.store.subscribe((_,status,error)=>{$('#save-status').textContent=status+(error?' · '+error.message:'');});
   $('#save-status').textContent=app.store.status;
@@ -28,6 +29,7 @@ export function mountDeveloperShell(app){
   }
   function navigate(destination){persistEditorInputs();ink?.destroy();ink=null;screenName=destination;render();screen.focus();}
   function render(){
+    pageZoom?.destroy();pageZoom=null;
     twoFingerUndo?.destroy();twoFingerUndo=null;
     nav.innerHTML=sectionNames.map(([id,label])=>`<button type="button" data-action="navigate" data-to="${id}" ${screenName===id?'aria-current="page"':''}>${label}</button>`).join('');
     if(screenName==='home'){
@@ -46,6 +48,10 @@ export function mountDeveloperShell(app){
         <div class="inline" style="margin-bottom:12px"><label>Paper <select id="paper-choice">${opts(PAPER_TYPES,page.paper)}</select></label><span class="pencil-only-label" title="Drawing accepts Apple Pencil contact only">Apple Pencil only</span><button data-action="add-page">+ Page</button><button data-action="duplicate-page">Duplicate page</button><button data-action="delete-page">Delete page</button><button data-action="attach">Attach PDF / image</button></div>
         <div class="editor-layout"><aside class="page-list" aria-label="Pages">${n.pages.map((p,i)=>`<button type="button" data-action="select-page" data-id="${p.id}" ${p.id===pageId?'aria-current="page"':''}>Page ${i+1}</button>`).join('')}</aside>
           <section><div id="writing-surface" class="writing-surface ${tool==='type'?'mode-type':'mode-ink'}" data-paper="${page.paper}"><textarea id="page-text" placeholder="">${escape(page.text)}</textarea><canvas id="ink-canvas" aria-label="Handwriting canvas"></canvas></div></section>
+        </div><div class="page-zoom-controls" id="page-zoom-controls" role="group" aria-label="Page zoom">
+          <button type="button" data-zoom="out" aria-label="Zoom out" title="Zoom out">−</button>
+          <button type="button" data-zoom="reset" aria-label="Reset zoom to 100 percent" title="Fit page"><span data-zoom-value>100%</span></button>
+          <button type="button" data-zoom="in" aria-label="Zoom in" title="Zoom in">+</button>
         </div><section class="panel"><h3>Attached files</h3><div class="stack">${page.attachments.map(a=>`<div class="inline"><span>${escape(a.name)} (${Math.ceil(a.size/1024)} KB)</span><button data-action="open-attachment" data-id="${a.id}">Open</button><button data-action="remove-attachment" data-id="${a.id}">Remove</button></div>`).join('')||'<p class="muted">No files attached.</p>'}</div></section><p id="status-message" role="status"></p>`;
       if(tool!=='type'){
         const editor=$('#page-text');
@@ -69,6 +75,10 @@ export function mountDeveloperShell(app){
       twoFingerUndo=mountTwoFingerDoubleTap($('#writing-surface'),{
         enabled:()=>screenName==='editor'&&tool!=='type',
         onUndo:()=>ink?.undo(),
+      });
+      pageZoom=mountPageZoom($('.editor-layout > section'),$('#writing-surface'),$('#page-zoom-controls'),{
+        onGesture:()=>twoFingerUndo?.reset?.(),
+        onSettled:()=>ink?.redraw(),
       });
     }else if(screenName==='planner'){
       screen.innerHTML=`<div class="screen-header"><h1>Planner</h1></div><form id="add-task" class="fields"><div class="field"><label for="task-title">Assignment / task</label><input name="title" id="task-title" required></div><div class="field"><label for="task-date">Due date</label><input type="date" id="task-date" name="due"></div><button type="submit">Add task</button></form><section class="panel"><h2>Tasks</h2>${app.study.listTasks().map(t=>`<div class="row inline"><label class="inline"><input data-task="${t.id}" type="checkbox" ${t.done?'checked':''}> ${escape(t.title)}</label><small class="muted">${escape((t.dueAt||'').slice(0,10))}</small><button data-action="delete-task" data-id="${t.id}">Delete</button></div>`).join('')||'<p class="muted">No tasks yet.</p>'}</section>`;
@@ -197,5 +207,5 @@ export function mountDeveloperShell(app){
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&screenName==='editor'&&document.activeElement?.id!=='page-text'&&document.activeElement?.id!=='note-title'){e.preventDefault();if(e.shiftKey)ink?.redo();else ink?.undo();}});
   window.addEventListener('pagehide',persistEditorInputs);
   render();
-  return {showNewNote,navigate,render,destroy(){twoFingerUndo?.destroy();ink?.destroy();clearTimeout(inputTimeout);}};
+  return {showNewNote,navigate,render,destroy(){pageZoom?.destroy();twoFingerUndo?.destroy();ink?.destroy();clearTimeout(inputTimeout);}};
 }
