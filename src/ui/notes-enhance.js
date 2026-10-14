@@ -106,6 +106,14 @@ export function enhanceNotesUI(app,shell){
   bar.querySelectorAll('button[data-action="tool"]').forEach(b=>{let name=b.dataset.tool;b.title=name==='type'?'Text':name[0].toUpperCase()+name.slice(1);b.setAttribute('aria-label',b.title);b.innerHTML=svg(name);b.classList.add('tool-btn');});
   ['undo','redo','clear-ink'].forEach(name=>{const b=bar.querySelector('[data-action="'+name+'"]');if(!b)return;b.title=name==='clear-ink'?'Clear handwriting':name[0].toUpperCase()+name.slice(1);b.setAttribute('aria-label',b.title);b.innerHTML=svg(name==='clear-ink'?'trash':name);b.classList.add('tool-btn');});
   const paper=options?.querySelector('#paper-choice')?.closest('label');if(paper){paper.classList.add('toolbar-paper');bar.append(paper);}
+  if(options){
+   const tags=screen.querySelector('#note-tags')?.closest('.field');
+   if(tags){tags.classList.add('page-meta-field');options.append(tags);}
+   const star=screen.querySelector('#star-note')?.closest('label');
+   if(star){star.classList.add('page-meta-check');options.append(star);}
+   const review=screen.querySelector('#review-date');
+   if(review){const line=document.createElement('label');line.className='page-meta-field';line.textContent='Review date';line.append(review);options.append(line);}
+  }
   const color=bar.querySelector('#pen-color');if(color){color.title='Ink color';color.setAttribute('aria-label','Ink color');}
   const size=bar.querySelector('#pen-size');if(size){size.setAttribute('aria-label','Pen thickness');}
   if(options)options.querySelectorAll('button[data-action]').forEach(b=>{const a=b.dataset.action;b.classList.add('small-action');if(a==='add-page')b.innerHTML=svg('plus')+' Page';});
