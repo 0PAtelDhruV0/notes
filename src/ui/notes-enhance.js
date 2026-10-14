@@ -151,7 +151,7 @@ export function enhanceNotesUI(app,shell){
    if(e.pointerType==='mouse'&&e.button!==0)return;
    e.preventDefault();e.stopPropagation();closeDockMenu(bar);
    const box=bar.getBoundingClientRect();
-   bar.classList.remove('dock-top','dock-bottom','dock-left','dock-right','toolbar-vertical');
+   bar.classList.remove('dock-top','dock-bottom','dock-left','dock-right');
    drag={id:e.pointerId,dx:e.clientX-box.left,dy:e.clientY-box.top,bar};
    setToolbarPos(bar,box.left,box.top);
    try{grip.setPointerCapture(e.pointerId);}catch{}
@@ -166,7 +166,7 @@ export function enhanceNotesUI(app,shell){
    const pos=bar.getBoundingClientRect();
    bar.classList.remove('dragging');drag=null;
    try{grip.releasePointerCapture(e.pointerId);}catch{}
-   setDock(bar,nearestDock(pos));
+   setDock(bar,nearestDock({left:e.clientX,top:e.clientY,width:0,height:0}));
   };
   grip.addEventListener('pointerup',stop);
   grip.addEventListener('pointercancel',stop);
