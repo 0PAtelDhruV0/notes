@@ -102,7 +102,25 @@ export function enhanceNotesUI(app,shell){
   if(!bar)return;
   bar.classList.add('floating-tools');bar.setAttribute('role','toolbar');bar.setAttribute('aria-label','Writing tools');
   const label=bar.querySelector('span');if(label)label.remove();
-  const grip=document.createElement('button');grip.id='toolbar-grip';grip.className='tool-grip';grip.type='button';grip.title='Drag toolbar';grip.setAttribute('aria-label','Drag toolbar');grip.innerHTML=svg('grip');bar.prepend(grip);
+  const grip=document.createElement('button');grip.id='toolbar-grip';grip.className='tool-grip';grip.type='button';grip.title='Drag to snap toolbar to an edge';grip.setAttribute('aria-label','Drag toolbar to a screen edge');grip.innerHTML=svg('grip');bar.prepend(grip);
+  const dockButton=document.createElement('button');
+  dockButton.type='button';dockButton.id='toolbar-dock-toggle';dockButton.className='tool-btn toolbar-dock-toggle';
+  dockButton.title='Choose toolbar position';dockButton.setAttribute('aria-label','Choose toolbar position');
+  dockButton.setAttribute('aria-expanded','false');dockButton.setAttribute('aria-haspopup','true');
+  dockButton.innerHTML='<span class="dock-toggle-glyph" aria-hidden="true">⊞</span>';
+  grip.after(dockButton);
+  const dockMenu=document.createElement('div');dockMenu.id='toolbar-dock-menu';dockMenu.className='toolbar-dock-menu';
+  dockMenu.setAttribute('role','group');dockMenu.setAttribute('aria-label','Dock toolbar');
+  dockMenu.innerHTML='<span class="dock-menu-title">Toolbar position</span>'+
+   [['top','Top','↑'],['bottom','Bottom','↓'],['left','Left','←'],['right','Right','→']].map(([value,name,arrow])=>
+    '<button type="button" class="dock-choice" data-dock="'+value+'" aria-label="Dock toolbar '+name+'" title="'+name+'">'+
+    '<span aria-hidden="true">'+arrow+'</span><small>'+name+'</small></button>').join('');
+  bar.append(dockMenu);
+  dockButton.addEventListener('click',e=>{e.stopPropagation();const open=dockMenu.classList.toggle('open');dockButton.setAttribute('aria-expanded',String(open));});
+  dockMenu.addEventListener('click',e=>{
+    const choice=e.target.closest('button[data-dock]');if(!choice)return;
+    e.stopPropagation();setDock(bar,choice.dataset.dock);closeDockMenu(bar);
+  });
   bar.querySelectorAll('button[data-action="tool"]').forEach(b=>{let name=b.dataset.tool;b.title=name==='type'?'Text':name[0].toUpperCase()+name.slice(1);b.setAttribute('aria-label',b.title);b.innerHTML=svg(name);b.classList.add('tool-btn');});
   ['undo','redo','clear-ink'].forEach(name=>{const b=bar.querySelector('[data-action="'+name+'"]');if(!b)return;b.title=name==='clear-ink'?'Clear handwriting':name[0].toUpperCase()+name.slice(1);b.setAttribute('aria-label',b.title);b.innerHTML=svg(name==='clear-ink'?'trash':name);b.classList.add('tool-btn');});
   const paper=options?.querySelector('#paper-choice')?.closest('label');if(paper){paper.classList.add('page-paper-option');}
@@ -130,31 +148,69 @@ export function enhanceNotesUI(app,shell){
   }
   positionToolbar(bar);
   grip.addEventListener('pointerdown',e=>{
-   if(e.button!==0&&e.pointerType==='mouse')return;e.preventDefault();e.stopPropagation();
+   if(e.pointerType==='mouse'&&e.button!==0)return;
+   e.preventDefault();e.stopPropagation();closeDockMenu(bar);
    const box=bar.getBoundingClientRect();
+   bar.classList.remove('dock-top','dock-bottom','dock-left','dock-right','toolbar-vertical');
    drag={id:e.pointerId,dx:e.clientX-box.left,dy:e.clientY-box.top,bar};
-   grip.setPointerCapture(e.pointerId);bar.classList.add('dragging');
+   setToolbarPos(bar,box.left,box.top);
+   try{grip.setPointerCapture(e.pointerId);}catch{}
+   bar.classList.add('dragging');
   });
   grip.addEventListener('pointermove',e=>{
-   if(!drag||e.pointerId!==drag.id)return;e.preventDefault();
-   setToolbarPos(bar,e.clientX-drag.dx,e.clientY-drag.dy);
+   if(!drag||e.pointerId!==drag.id)return;
+   e.preventDefault();setToolbarPos(bar,e.clientX-drag.dx,e.clientY-drag.dy);
   });
-  const stop=e=>{if(!drag||e.pointerId!==drag.id)return;const r=bar.getBoundingClientRect();savePosition(r.left,r.top);bar.classList.remove('dragging');drag=null;};
-  grip.addEventListener('pointerup',stop);grip.addEventListener('pointercancel',stop);
+  const stop=e=>{
+   if(!drag||e.pointerId!==drag.id)return;
+   const pos=bar.getBoundingClientRect();
+   bar.classList.remove('dragging');drag=null;
+   try{grip.releasePointerCapture(e.pointerId);}catch{}
+   setDock(bar,nearestDock(pos));
+  };
+  grip.addEventListener('pointerup',stop);
+  grip.addEventListener('pointercancel',stop);
  }
- function savePosition(x,y){try{localStorage.setItem(TPOS,JSON.stringify({x,y}));}catch{}}
- function setToolbarPos(el,x,y){
-  const w=el.offsetWidth||490,h=el.offsetHeight||55;
-  el.style.left=Math.max(8,Math.min(x,innerWidth-w-8))+'px';
-  el.style.top=Math.max(8,Math.min(y,innerHeight-h-8))+'px';
-  el.style.bottom='auto';el.style.transform='none';
+ const DOCKS=['top','bottom','left','right'];
+ function getSavedDock(){
+  try{
+   const item=JSON.parse(localStorage.getItem(TPOS)||'null');
+   if(DOCKS.includes(item?.dock))return item.dock;
+   // Old versions stored freely dragged x/y; convert to the nearest dock.
+   if(Number.isFinite(item?.x)&&Number.isFinite(item?.y))
+    return nearestDock({left:item.x,top:item.y,width:0,height:0});
+  }catch{}
+  return 'bottom';
+ }
+ function nearestDock(rect){
+  const centerX=rect.left+rect.width/2,centerY=rect.top+rect.height/2;
+  const distances={top:centerY,bottom:innerHeight-centerY,left:centerX,right:innerWidth-centerX};
+  return DOCKS.reduce((best,dock)=>distances[dock]<distances[best]?dock:best,'bottom');
+ }
+ function closeDockMenu(bar){
+  const menu=bar?.querySelector('#toolbar-dock-menu');
+  menu?.classList.remove('open');
+  bar?.querySelector('#toolbar-dock-toggle')?.setAttribute('aria-expanded','false');
+ }
+ function setDock(bar,dock){
+  const chosen=DOCKS.includes(dock)?dock:'bottom';
+  bar.classList.remove('dock-top','dock-bottom','dock-left','dock-right','toolbar-vertical','dragging');
+  bar.style.left='';bar.style.top='';bar.style.right='';bar.style.bottom='';bar.style.transform='';
+  bar.classList.add('dock-'+chosen);
+  if(chosen==='left'||chosen==='right')bar.classList.add('toolbar-vertical');
+  bar.dataset.dock=chosen;
+  bar.querySelectorAll('.dock-choice').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.dock===chosen)));
+  closeDockMenu(bar);
+  try{localStorage.setItem(TPOS,JSON.stringify({dock:chosen}));}catch{}
+ }
+ function setToolbarPos(bar,x,y){
+  const width=bar.offsetWidth||70,height=bar.offsetHeight||56;
+  bar.style.left=Math.max(8,Math.min(x,innerWidth-width-8))+'px';
+  bar.style.top=Math.max(8,Math.min(y,innerHeight-height-8))+'px';
+  bar.style.right='auto';bar.style.bottom='auto';bar.style.transform='none';
  }
  function positionToolbar(bar){
-  let saved=null;try{saved=JSON.parse(localStorage.getItem(TPOS)||'null');}catch{}
-  const width=bar.offsetWidth||530,height=bar.offsetHeight||58;
-  const x=saved&&Number.isFinite(saved.x)?saved.x:Math.max(8,(innerWidth-width)/2);
-  const y=saved&&Number.isFinite(saved.y)?saved.y:innerHeight-height-33;
-  setToolbarPos(bar,x,y);
+  setDock(bar,getSavedDock());
  }
  function decorate(){
   decorateNavigation();
@@ -218,6 +274,13 @@ export function enhanceNotesUI(app,shell){
     screen.querySelector('#editor-page-menu')?.setAttribute('aria-expanded','false');
    }
   });
+ screen.addEventListener('pointerdown',e=>{
+  const bar=screen.querySelector('.floating-tools');
+  if(bar&&!bar.contains(e.target))closeDockMenu(bar);
+ });
+ document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeDockMenu(screen.querySelector('.floating-tools'));
+ });
  window.addEventListener('resize',()=>{const b=screen.querySelector('.floating-tools');if(b&&!drag)positionToolbar(b);});
  app.store.subscribe((_,status)=>{const el=document.getElementById('save-status');if(el)el.textContent=status;});
  decorate();

@@ -212,3 +212,114 @@ body.editor-mode .writing-surface.mode-type #page-text{
   touch-action:auto!important;
   caret-color:#24212d;
 }
+
+/* Four fixed, persistent docking choices for the full-screen iPad toolbar. */
+body.editor-mode .floating-tools{
+ border-radius:999px!important;
+ padding:7px 9px!important;
+ gap:4px!important;
+ box-shadow:0 10px 32px rgba(20,13,31,.38),0 0 0 1px rgba(255,255,255,.09)!important;
+ max-height:calc(100dvh - 24px);
+ -webkit-user-select:none!important;user-select:none!important;
+ -webkit-touch-callout:none!important;
+}
+body.editor-mode .floating-tools>button{
+ border-radius:50%!important;
+}
+body.editor-mode .floating-tools .toolbar-dock-toggle{
+ width:31px;min-width:31px;height:31px;
+ color:#cbbbe9;border-radius:50%!important;background:#342d42!important;
+}
+body.editor-mode .floating-tools .toolbar-dock-toggle:hover,
+body.editor-mode .floating-tools .toolbar-dock-toggle[aria-expanded=true]{background:#55456e!important;color:#fff}
+body.editor-mode .floating-tools .dock-toggle-glyph{font-size:20px;line-height:1}
+body.editor-mode .floating-tools.dock-top{
+ top:calc(72px + env(safe-area-inset-top, 0px))!important;bottom:auto!important;
+ left:50%!important;right:auto!important;transform:translateX(-50%)!important;
+}
+body.editor-mode .floating-tools.dock-bottom{
+ top:auto!important;bottom:calc(20px + env(safe-area-inset-bottom, 0px))!important;
+ left:50%!important;right:auto!important;transform:translateX(-50%)!important;
+}
+body.editor-mode .floating-tools.dock-left{
+ top:50%!important;bottom:auto!important;left:calc(12px + env(safe-area-inset-left, 0px))!important;
+ right:auto!important;transform:translateY(-50%)!important;
+}
+body.editor-mode .floating-tools.dock-right{
+ top:50%!important;bottom:auto!important;right:calc(12px + env(safe-area-inset-right, 0px))!important;
+ left:auto!important;transform:translateY(-50%)!important;
+}
+body.editor-mode .floating-tools.toolbar-vertical{
+ display:flex!important;flex-direction:column!important;
+ width:70px!important;height:auto!important;min-height:0;
+ max-height:calc(100dvh - 22px);max-width:70px!important;
+ gap:3px!important;padding:9px 7px!important;
+ border-radius:35px!important;overflow:visible;
+}
+body.editor-mode .floating-tools.toolbar-vertical>button{width:34px!important;min-width:34px!important;height:34px!important}
+body.editor-mode .floating-tools.toolbar-vertical .tool-grip{
+ width:35px!important;min-width:35px!important;height:23px!important;border-right:0!important;
+ border-bottom:1px solid #524858!important;
+}
+body.editor-mode .floating-tools.toolbar-vertical label{
+ flex-direction:column;gap:2px!important;font-size:9px!important;
+}
+body.editor-mode .floating-tools.toolbar-vertical label[for=pen-size]{margin:0}
+body.editor-mode .floating-tools.toolbar-vertical #pen-size{width:46px!important}
+body.editor-mode .floating-tools.toolbar-vertical #pen-color{width:24px!important;height:24px!important}
+body.editor-mode .floating-tools .toolbar-dock-menu{
+ display:none;position:absolute;z-index:100;
+ width:224px;height:auto;min-height:0;padding:12px;
+ background:#272231;border:1px solid #5b4b70;
+ border-radius:21px;box-shadow:0 16px 45px rgba(0,0,0,.45);
+ grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+ white-space:normal;
+}
+body.editor-mode .floating-tools .toolbar-dock-menu.open{display:grid}
+body.editor-mode .floating-tools .dock-menu-title{
+ grid-column:1/-1;font-size:11px;font-weight:750;color:#d6c7eb;
+ letter-spacing:.01em;padding:1px 4px 5px;
+}
+body.editor-mode .floating-tools .dock-choice{
+ display:flex;align-items:center;justify-content:center;gap:7px;
+ padding:10px 9px;background:#383043;color:#d5cbe0;
+ border:1px solid #51445f;border-radius:13px;font-size:13px;
+}
+body.editor-mode .floating-tools .dock-choice small{font-size:11px;font-weight:650}
+body.editor-mode .floating-tools .dock-choice[aria-pressed=true]{
+ background:#a88dfb;color:#1d142b;border-color:#a88dfb;
+}
+body.editor-mode .floating-tools.dock-top .toolbar-dock-menu{
+ top:calc(100% + 12px);left:30px;bottom:auto;right:auto;
+}
+body.editor-mode .floating-tools.dock-bottom .toolbar-dock-menu{
+ bottom:calc(100% + 12px);left:30px;top:auto;right:auto;
+}
+body.editor-mode .floating-tools.dock-left .toolbar-dock-menu{
+ left:calc(100% + 12px);top:10px;right:auto;bottom:auto;
+}
+body.editor-mode .floating-tools.dock-right .toolbar-dock-menu{
+ right:calc(100% + 12px);top:10px;left:auto;bottom:auto;
+}
+body.editor-mode .floating-tools.dock-top .floating-popover{
+ top:calc(100% + 12px);bottom:auto;
+}
+body.editor-mode .floating-tools.dock-bottom .floating-popover{
+ bottom:calc(100% + 12px);top:auto;
+}
+body.editor-mode .floating-tools.dock-left .floating-popover{
+ left:calc(100% + 12px);right:auto;top:50%;bottom:auto;transform:translateY(-50%);
+}
+body.editor-mode .floating-tools.dock-right .floating-popover{
+ right:calc(100% + 12px);left:auto;top:50%;bottom:auto;transform:translateY(-50%);
+}
+@media(max-height:720px){
+ body.editor-mode .floating-tools.toolbar-vertical{gap:1px!important;padding:5px 6px!important}
+ body.editor-mode .floating-tools.toolbar-vertical>button{height:30px!important;min-height:30px!important}
+ body.editor-mode .floating-tools.toolbar-vertical label{font-size:8px!important;gap:0!important}
+}
+@media(max-width:600px){
+ body.editor-mode .floating-tools.toolbar-vertical{width:59px!important;max-width:59px!important;padding:6px 4px!important}
+ body.editor-mode .floating-tools.dock-top{top:calc(102px + env(safe-area-inset-top, 0px))!important}
+ body.editor-mode .floating-tools .toolbar-dock-menu{width:200px}
+}

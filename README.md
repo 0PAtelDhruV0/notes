@@ -51,3 +51,7 @@ This is an iPad-friendly web app, not a replacement for native Goodnotes or Nota
 ## iPad Pencil responsiveness
 
 The v6 Pencil renderer no longer redraws every saved stroke for every pointer movement. It batches coalesced Pencil samples into animation frames and caches completed strokes. The ink layer blocks Safari selection/context-menu gestures in drawing mode; text selection remains available when the **Text** tool is active. Pen contact also suppresses nearby palm touches. For best results, install the site to the iPad Home Screen and choose **Pen** (not Text). Performance still varies with device and note size; native iPad Pencil latency isn't guaranteed by Safari.
+
+## Four-position rounded toolbar
+
+The iPad editor now uses a pill-shaped toolbar with four fixed positions. Tap the small four-way position button beside the drag grip to choose **Top**, **Bottom**, **Left** or **Right**. Top and Bottom are horizontal; Left and Right are vertical. You can also drag the grip and release it to snap to the nearest screen edge. The position is remembered on this browser/device. This does not change note contents, the ink engine, or the IndexedDB workspace schema.

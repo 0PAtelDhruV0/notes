@@ -1,5 +1,5 @@
 /* Cache static assets only. Student notes remain in IndexedDB. */
-const CACHE='notes-static-v6-pencil';
+const CACHE='notes-static-v7-dock';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./src/main.js','./src/app.js','./src/ui/developer-shell.js','./src/ui/notes-enhance.js','./src/styles/notes.css','./src/core/model.js','./src/core/workspace-store.js','./src/storage/database.js','./src/services/catalog.js','./src/services/notes.js','./src/services/study.js','./src/services/attachments.js','./src/services/backup.js','./src/editor/ink.js','./catalog/worldwide-subjects.csv'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('notes-static-')||k.startsWith('notebook-foundation-')).filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
