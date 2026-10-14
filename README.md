@@ -47,3 +47,7 @@ Run `npm test` to check the note engine and `npm run check` for syntax and unit 
 
 This is an iPad-friendly web app, not a replacement for native Goodnotes or Notability. Validate Apple Pencil behavior in Safari on your own iPad, particularly after iPadOS updates.
 > Existing pages are never wiped by this UI update. Older notes that already contain lecture text or use ruled/grid paper retain their saved content and paper type. New notes and newly added pages default to blank white.
+
+## iPad Pencil responsiveness
+
+The v6 Pencil renderer no longer redraws every saved stroke for every pointer movement. It batches coalesced Pencil samples into animation frames and caches completed strokes. The ink layer blocks Safari selection/context-menu gestures in drawing mode; text selection remains available when the **Text** tool is active. Pen contact also suppresses nearby palm touches. For best results, install the site to the iPad Home Screen and choose **Pen** (not Text). Performance still varies with device and note size; native iPad Pencil latency isn't guaranteed by Safari.

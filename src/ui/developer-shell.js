@@ -45,7 +45,19 @@ export function mountDeveloperShell(app){
         <div class="editor-layout"><aside class="page-list" aria-label="Pages">${n.pages.map((p,i)=>`<button type="button" data-action="select-page" data-id="${p.id}" ${p.id===pageId?'aria-current="page"':''}>Page ${i+1}</button>`).join('')}</aside>
           <section><div id="writing-surface" class="writing-surface ${tool==='type'?'mode-type':'mode-ink'}" data-paper="${page.paper}"><textarea id="page-text" placeholder="">${escape(page.text)}</textarea><canvas id="ink-canvas" aria-label="Handwriting canvas"></canvas></div></section>
         </div><section class="panel"><h3>Attached files</h3><div class="stack">${page.attachments.map(a=>`<div class="inline"><span>${escape(a.name)} (${Math.ceil(a.size/1024)} KB)</span><button data-action="open-attachment" data-id="${a.id}">Open</button><button data-action="remove-attachment" data-id="${a.id}">Remove</button></div>`).join('')||'<p class="muted">No files attached.</p>'}</div></section><p id="status-message" role="status"></p>`;
-      if(tool!=='type')$('#page-text').readOnly=true;
+      if(tool!=='type'){
+        const editor=$('#page-text');
+        editor.readOnly=true;
+        editor.tabIndex=-1;
+        editor.inputMode='none';
+        editor.setAttribute('aria-hidden','true');
+      }else{
+        const editor=$('#page-text');
+        editor.readOnly=false;
+        editor.tabIndex=0;
+        editor.inputMode='text';
+        editor.removeAttribute('aria-hidden');
+      }
       ink?.destroy();
       ink=mountInkCanvas($('#ink-canvas'),{
         initialStrokes:page.strokes,

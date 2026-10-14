@@ -170,3 +170,45 @@ body.editor-mode .page-actions .page-paper-option{margin:5px 0}
 @media(prefers-reduced-motion:reduce){
  body.editor-mode .floating-tools{transition:none}
 }
+
+
+/* iPad Pencil reliability: no Safari text selection or gesture handling
+   on the drawing layer; text remains selectable only in the Text tool. */
+body.editor-mode .writing-surface,
+body.editor-mode .writing-surface.mode-ink,
+body.editor-mode .writing-surface.mode-ink *,
+body.editor-mode #ink-canvas{
+  -webkit-user-select:none!important;
+  user-select:none!important;
+  -webkit-touch-callout:none!important;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:none!important;
+}
+body.editor-mode #ink-canvas{
+  display:block!important;
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;height:100%!important;
+  z-index:3!important;
+  pointer-events:auto;
+  cursor:crosshair;
+}
+body.editor-mode .writing-surface.mode-ink #page-text{
+  z-index:2!important;
+  pointer-events:none!important;
+  -webkit-user-select:none!important;
+  user-select:none!important;
+  -webkit-touch-callout:none!important;
+  caret-color:transparent;
+}
+body.editor-mode .writing-surface.mode-type #ink-canvas{
+  pointer-events:none!important;
+}
+body.editor-mode .writing-surface.mode-type #page-text{
+  pointer-events:auto!important;
+  -webkit-user-select:text!important;
+  user-select:text!important;
+  -webkit-touch-callout:default!important;
+  touch-action:auto!important;
+  caret-color:#24212d;
+}
