@@ -1,13 +1,15 @@
 {
-  "name": "notebook-foundation",
-  "version": "0.1.0",
+  "name": "notes-study-space",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Framework-independent, local-first iPad notebook application foundation. Bring your own UI and UX.",
+  "description": "Offline-first student notes with an iPad dashboard and floating writing toolbar",
   "scripts": {
     "dev": "node scripts/dev-server.mjs",
     "test": "node --test tests/*.test.js",
-    "check": "node --check src/main.js && node --test tests/*.test.js"
+    "check": "node --check src/main.js && node --check src/ui/developer-shell.js && node --check src/ui/notes-enhance.js && node --test tests/*.test.js"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }
